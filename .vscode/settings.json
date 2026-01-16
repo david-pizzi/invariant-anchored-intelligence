@@ -1,0 +1,28 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^python -c \"import pandas as pd; df = pd\\.read_csv\\('experiment_log\\.csv'\\); df\\['epsilon'\\] = 0\\.1; df\\['iai_gamma'\\] = 0\\.05; df\\.to_csv\\('experiment_log\\.csv', index=False\\); print\\('Added epsilon=0\\.1 and iai_gamma=0\\.05 to all existing rows'\\)\"$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^python run_experiment\\.py --k 5 --steps 10000 --seeds 1 --drift_step 5000 --outdir runs\\\\param_test$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^python run_experiment\\.py --k 5 --steps 10000 --seeds 1 --drift_step 5000 --epsilon 0\\.3 --iai_gamma 0\\.2 --outdir runs\\\\high_explore$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^Remove-Item experiment_log\\.csv; python run_experiment\\.py --k 5 --steps 5000 --seeds 3 --drift_step 2500 --outdir runs\\\\test_multi; python run_experiment\\.py --k 5 --steps 5000 --seeds 1 --drift_step 2500 --epsilon 0\\.05 --outdir runs\\\\test_single$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^python run_experiment\\.py --k 5 --steps 5000 --seeds 1 --drift_step 2500 --epsilon 0\\.05 --outdir runs\\\\single$/": {
+            "approve": true,
+            "matchCommandLine": true
+        },
+        "/^Remove-Item experiment_log\\.csv -ErrorAction SilentlyContinue; python run_experiment\\.py --k 5 --steps 5000 --seeds 2 --drift_step 2500 --epsilon 0\\.3 --iai_gamma 0\\.15 --outdir runs\\\\high_params$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}

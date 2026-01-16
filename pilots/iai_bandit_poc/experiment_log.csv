@@ -1,0 +1,2 @@
+timestamp,run_id,generation,system,avg_regret,avg_reward,strain_detected,proposal_name,decision,decision_confidence,invariants
+2026-01-15T17:16:52.355271,iai_evolution,0,iai,28.976109677545775,138.0,False,,NO_REVIEW,,"{""metric"": ""cumulative_reward""}"
