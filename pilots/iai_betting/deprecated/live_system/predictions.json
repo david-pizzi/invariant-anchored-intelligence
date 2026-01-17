@@ -1,0 +1,24 @@
+{
+  "strategy": {
+    "name": "Home Underdog Edge",
+    "selection": "H",
+    "odds_min": 4.0,
+    "odds_max": 6.0,
+    "stake_pct": 3.0,
+    "expected_edge": 5.2
+  },
+  "bankroll": {
+    "initial": 1000,
+    "current": 1000
+  },
+  "predictions": [],
+  "results_summary": {
+    "total_bets": 0,
+    "wins": 0,
+    "losses": 0,
+    "pending": 0,
+    "profit": 0,
+    "roi_pct": 0
+  },
+  "last_updated": "2026-01-16T14:28:43.480815"
+}

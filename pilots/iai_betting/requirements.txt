@@ -1,0 +1,11 @@
+# IAI Betting Pilot
+numpy>=1.24
+pandas>=2.0
+rich>=13.0.0
+
+# LLM Authority (for full IAI evolution)
+foundry-local-sdk>=0.1.0
+openai>=1.0.0
+
+# Data (minimal - we download from football-data.co.uk)
+# No additional packages needed for basic functionality
