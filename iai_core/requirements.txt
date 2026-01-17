@@ -1,0 +1,13 @@
+# IAI Core Library
+numpy>=1.24
+pandas>=2.0
+rich>=13.0.0
+
+# LLM Authority (optional - only needed for full IAI evolution)
+# foundry-local-sdk>=0.1.0
+# openai>=1.0.0
+
+# Visualization (optional)
+# matplotlib>=3.7
+# plotly>=5.18.0
+# streamlit>=1.30.0

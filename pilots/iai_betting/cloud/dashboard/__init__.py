@@ -39,6 +39,9 @@ def generate_html(data):
     pending = [p for p in predictions if p['status'] == 'pending']
     settled = [p for p in predictions if p['status'] in ['won', 'lost']]
     
+    # Sort pending bets by date (earliest first)
+    pending.sort(key=lambda x: x['match_date'])
+    
     # Calculate projected balance if all pending bets win
     projected_balance = bankroll['current'] + sum(p.get('potential_profit', 0) for p in pending)
     projected_profit = projected_balance - bankroll['initial']
