@@ -222,8 +222,48 @@ def generate_html(data):
             </div>
         </div>
         
+        <div class="card">
+            <h2>🔄 Manual Actions</h2>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button onclick="runNow()" style="padding: 15px 30px; background: #00d9ff; color: #000; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">
+                    🔄 Run Tracker Now
+                </button>
+                <button onclick="location.reload()" style="padding: 15px 30px; background: #ff6b6b; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer;">
+                    🔃 Refresh Dashboard
+                </button>
+            </div>
+            <p id="status" style="margin-top: 15px; font-weight: bold;"></p>
+        </div>
+        
         <p class="updated">Last updated: {data.get('last_updated', 'Never')}</p>
         <p class="updated">Strategy: HOME WIN @ 4.0-6.0 odds, 3% stake (EPL + Bundesliga)</p>
+        
+        <script>
+        async function runNow() {{
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = '⏳ Running tracker...';
+            statusEl.style.color = '#ffaa00';
+            
+            try {{
+                const response = await fetch('/api/run_now', {{ method: 'POST' }});
+                const result = await response.json();
+                
+                if (response.ok) {{
+                    statusEl.textContent = '✅ Tracker completed! Refresh page to see updates.';
+                    statusEl.style.color = '#00ff88';
+                    
+                    // Auto-refresh after 3 seconds
+                    setTimeout(() => location.reload(), 3000);
+                }} else {{
+                    statusEl.textContent = '❌ Error: ' + (result.error || 'Unknown error');
+                    statusEl.style.color = '#ff4444';
+                }}
+            }} catch (error) {{
+                statusEl.textContent = '❌ Network error: ' + error.message;
+                statusEl.style.color = '#ff4444';
+            }}
+        }}
+        </script>
     </body>
     </html>
     """
