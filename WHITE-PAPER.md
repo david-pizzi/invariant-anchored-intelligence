@@ -267,6 +267,128 @@ A critical distinction separates ICL from a Zero-Invariant Variant (ZIV), in whi
 
 At no point does an ICL-governed system evaluate itself under an invariant it has not been externally authorised to use. This is intended as the decisive difference.  
 
+#### 4.5.1 When to Activate ICL
+
+The Invariant Challenge Loop is **not universally beneficial**. It is an advanced feature that should only be activated when specific conditions are met. This section distinguishes between the IAI architecture (which is foundational) and ICL (which is conditional).
+
+##### Architecture vs. Feature
+
+**IAI Architecture** (always beneficial):
+- Separation of Optimizer, Evaluator, and Authority
+- External evaluation computation
+- Prevention of self-ratification
+- Clear boundaries and auditability
+
+These architectural properties provide value in any domain and should be present in all IAI systems.
+
+**ICL Feature** (conditionally beneficial):
+- Active strain detection
+- Proposal generation
+- Invariant challenge and evolution
+
+ICL adds value only when the domain exhibits specific characteristics. Premature or inappropriate ICL activation can degrade performance.
+
+##### Conditions Favoring ICL Activation
+
+ICL should be activated when:
+
+1. **Regime shifts occur**: The domain undergoes structural changes that render current invariants misaligned (e.g., market crashes, regulatory changes, supply chain disruptions).
+
+2. **Metric conflicts emerge**: Multiple competing objectives create trade-offs that suggest invariant weights are suboptimal (e.g., optimizing Sharpe ratio degrades drawdown control).
+
+3. **Strategies are competent**: Baseline strategies achieve acceptable performance, but invariant thresholds may be limiting further improvement.
+
+4. **Sufficient data exists**: Sample sizes are large enough to distinguish genuine strain signals from statistical noise (typically requires dozens to hundreds of evaluation cycles).
+
+5. **Stabilization has occurred**: The system has operated under current invariants long enough for optimization to converge (avoiding premature churn).
+
+##### Conditions Requiring ICL Deactivation
+
+ICL should be deactivated or not activated when:
+
+1. **Insufficient statistical power**: Small sample sizes (e.g., 2-3 runs per generation) create high variance, leading to noise-driven proposals that degrade performance.
+
+2. **Broken baseline strategies**: When strategies consistently fail (e.g., negative returns, zero trades), the problem is strategy competence, not invariant calibration. ICL proposals will only enable more execution of failing strategies.
+
+3. **Stable regimes**: In well-understood, stationary environments with no distribution shift, fixed invariants are sufficient and ICL adds unnecessary complexity.
+
+4. **Rapid churn risk**: When the system has not stabilized under current invariants, additional changes prevent convergence and create cycling behavior.
+
+##### Dynamic Activation Patterns
+
+ICL can be **conditionally activated** within the same domain based on operating conditions:
+
+**Example: Forex Trading**
+
+```
+Normal Market (Low Volatility, Mean-Reverting):
+├─ ICL Status: INACTIVE
+├─ Rationale: Stable regime, no strain signals
+└─ Behavior: Optimize under fixed invariants
+
+Market Crisis (High Volatility, Trending):
+├─ ICL Status: ACTIVE
+├─ Rationale: Regime shift detected, invariants under strain
+├─ Challenger Proposal: "Sharpe > 1.5 too strict for volatile regime; 
+│                        propose Sharpe > 1.0 with tighter position sizing"
+└─ Behavior: Generate proposals for Authority review
+```
+
+**Example: Supply Chain**
+
+```
+Steady Demand Period:
+├─ ICL Status: INACTIVE
+└─ Behavior: Minimize inventory under fixed cost targets
+
+Supply Shock (Disruption Event):
+├─ ICL Status: ACTIVE
+├─ Challenger Proposal: "Inventory minimization conflicts with availability; 
+│                        propose availability as primary metric"
+└─ Behavior: Adapt to new operating constraints
+```
+
+##### Implementation Considerations
+
+A practical ICL activation function might check:
+
+```python
+def should_activate_icl(context) -> bool:
+    # Require minimum sample size
+    if context.num_evaluations < MIN_SAMPLES:
+        return False
+    
+    # Require baseline competence
+    if context.strategy_performance < COMPETENCE_THRESHOLD:
+        return False  # Fix strategies first
+    
+    # Require stabilization period
+    if context.cycles_since_last_change < MIN_STABILIZATION:
+        return False  # Let current invariants settle
+    
+    # Detect regime shift
+    if context.has_distribution_shift():
+        return True
+    
+    # Detect genuine strain (not noise)
+    if context.has_statistically_significant_strain():
+        return True
+    
+    return False  # Default: keep ICL inactive
+```
+
+Even when ICL is inactive, the **Authority Heartbeat** continues: the Challenger emits `no_change` proposals and the Authority performs routine oversight. This maintains governance continuity while avoiding unnecessary invariant churn.
+
+##### Pilot-Specific Activation Status
+
+Current pilots demonstrate varying ICL applicability:
+
+- **Pilot 0 (Bandit)**: ICL activated—domain has regime shift (distribution drift), sufficient samples, competent strategies.
+- **Pilot 2 (Betting)**: ICL activated conditionally—enabled when market regimes change or hypothesis performance degrades.
+- **Forex (Evaluation Harness)**: ICL deactivated—strategies not yet profitable, insufficient basis for meaningful invariant evolution.
+
+This pattern reinforces a core principle: **architectural separation is universally valuable; ICL is a powerful tool that requires the right conditions**.
+
 ### 4.6 What Invariants Do *Not* Do
 
 Invariants do not:
