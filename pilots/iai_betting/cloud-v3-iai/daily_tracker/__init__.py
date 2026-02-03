@@ -47,14 +47,10 @@ def process_matches(data, matches, authority):
     for match in matches:
         match_key = get_match_key(match['home'], match['away'], match['date'])
         home_odds = match.get('home_odds', 0)
-        
-        # Skip if no odds data
-        if home_odds <= 1:
-            continue
-        
-        # Check if qualifies for our strategy
-        qualifies = STRATEGY['odds_min'] <= home_odds <= STRATEGY['odds_max']
-        
+
+        # Check if qualifies for our strategy (needs valid odds)
+        qualifies = home_odds > 1 and STRATEGY['odds_min'] <= home_odds <= STRATEGY['odds_max']
+
         # NEW PREDICTION: Match is upcoming and qualifies
         if match['date'] >= today and qualifies and match_key not in existing_keys:
             # Ask Authority for stake (may be reduced based on recent performance)
@@ -109,7 +105,7 @@ def process_matches(data, matches, authority):
                         pred['result'] = 'H'
                         pred['profit_loss'] = round(profit, 2)
                         pred['settled_at'] = datetime.utcnow().isoformat()
-                        pred['score'] = f"{match['home_goals']}-{match['away_goals']}"
+                        pred['score'] = match.get('score', f"{match.get('home_goals', match.get('home_score', ''))}-{match.get('away_goals', match.get('away_score', ''))}")
                         logger.info(f"WON: {pred['home_team']} +£{profit:.2f}")
                     else:
                         # We lost
@@ -117,7 +113,7 @@ def process_matches(data, matches, authority):
                         pred['result'] = match['result']
                         pred['profit_loss'] = -pred['stake']
                         pred['settled_at'] = datetime.utcnow().isoformat()
-                        pred['score'] = f"{match['home_goals']}-{match['away_goals']}"
+                        pred['score'] = match.get('score', f"{match.get('home_goals', match.get('home_score', ''))}-{match.get('away_goals', match.get('away_score', ''))}")
                         logger.info(f"LOST: {pred['home_team']} -£{pred['stake']:.2f}")
                     
                     results_updated += 1

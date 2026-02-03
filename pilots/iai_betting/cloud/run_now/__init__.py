@@ -38,12 +38,10 @@ def process_matches(data, matches, authority):
     for match in matches:
         match_key = get_match_key(match['home'], match['away'], match['date'])
         home_odds = match.get('home_odds', 0)
-        
-        if home_odds <= 1:
-            continue
-        
-        qualifies = STRATEGY['odds_min'] <= home_odds <= STRATEGY['odds_max']
-        
+
+        # Check if qualifies for our strategy (needs valid odds)
+        qualifies = home_odds > 1 and STRATEGY['odds_min'] <= home_odds <= STRATEGY['odds_max']
+
         if match['date'] >= today and qualifies and match_key not in existing_keys:
             # Ask Authority for stake
             stake, stake_reason = authority.calculate_stake(
@@ -94,13 +92,13 @@ def process_matches(data, matches, authority):
                         pred['result'] = 'H'
                         pred['profit_loss'] = round(profit, 2)
                         pred['settled_at'] = datetime.utcnow().isoformat()
-                        pred['score'] = f"{match['home_goals']}-{match['away_goals']}"
+                        pred['score'] = match.get('score', f"{match.get('home_goals', match.get('home_score', ''))}-{match.get('away_goals', match.get('away_score', ''))}")
                     else:
                         pred['status'] = 'lost'
                         pred['result'] = match['result']
                         pred['profit_loss'] = -pred['stake']
                         pred['settled_at'] = datetime.utcnow().isoformat()
-                        pred['score'] = f"{match['home_goals']}-{match['away_goals']}"
+                        pred['score'] = match.get('score', f"{match.get('home_goals', match.get('home_score', ''))}-{match.get('away_goals', match.get('away_score', ''))}")
                     
                     results_updated += 1
                     break
