@@ -18,19 +18,26 @@ This paper defines invariants, positions IAI within the broader design space bet
 
 ## Table of Contents
 
-1. Motivation  
-2. The Design Space  
-3. Definitions  
-4. Invariants: Role, Strength, and Rules  
-5. Core Architecture Pattern  
-6. Evaluation and Test Harness  
-7. Pilot Domains  
-8. Failure Modes and Mitigations  
-9. Limitations and Non-Goals  
-10. Related Work  
-11. Roadmap and Falsifiability  
+1. Motivation
+2. The Design Space
+3. Definitions
+4. Invariants: Role, Strength, and Rules
+   - 4.5 Invariant Challenge Loop (ICL)
+   - 4.6 Structural vs Parametric Invariant Changes
+   - 4.7 What Invariants Do Not Do
+5. Core Architecture Pattern
+   - 5.4 What "External" Means in Practice (incl. Causal Isolation, Authority Quality Requirements)
+   - 5.5 Meta-Invariant: The Protected Separation
+6. Evaluation and Test Harness
+7. Pilot Domains
+8. Failure Modes and Mitigations
+   - 8.8 Authority-System Information Asymmetry
+   - 8.9 Authority Quality Degradation
+9. Limitations and Non-Goals
+10. Related Work
+11. Roadmap and Falsifiability
 12. Future Extensions
-13. Conclusion  
+13. Conclusion
 
 ---
 
@@ -389,7 +396,31 @@ Current pilots demonstrate varying ICL applicability:
 
 This pattern reinforces a core principle: **architectural separation is universally valuable; ICL is a powerful tool that requires the right conditions**.
 
-### 4.6 What Invariants Do *Not* Do
+### 4.6 Structural vs Parametric Invariant Changes
+
+Not all invariant changes are equivalent in scope or risk. The ICL should distinguish between two categories:
+
+**Structural changes** alter what is being measured or evaluated:
+
+- replacing one metric with another (e.g., cumulative reward → regret-adjusted reward),
+- adding or removing evaluation criteria,
+- redefining the domain boundary or action space.
+
+Structural changes carry high risk and require full ICL governance: Challenger proposal, evidence package, Authority review, and explicit ratification.
+
+**Parametric changes** adjust calibration within a ratified evaluation structure:
+
+- tightening or loosening thresholds (e.g., Sharpe ratio target from 1.5 to 1.2),
+- reweighting existing metrics (e.g., shifting emphasis between stability and return),
+- adapting parameters to gradual drift within the same regime.
+
+Parametric changes carry lower risk because the evaluation framework itself is preserved. They may be governed through a lighter-weight process: reduced evidence requirements, faster review cadence, or pre-authorised adjustment ranges defined by the Authority.
+
+This distinction matters because treating all invariant evolution as equally heavyweight makes the system either too conservative (rejecting small calibrations that need full ratification) or too permissive (treating threshold tweaks as indistinguishable from fundamental metric changes). A two-tier governance model preserves rigor for structural changes while enabling responsive adaptation for parametric ones.
+
+The Authority defines which changes are structural and which are parametric. The system may not reclassify a structural change as parametric to bypass governance.
+
+### 4.7 What Invariants Do *Not* Do
 
 Invariants do not:
 
@@ -446,14 +477,27 @@ Steps 4 and 7 are decisive: the success signal and invariant authority must rema
 - **Orchestrator:** coordinates the multi-generation evolution loop (Run → Challenge → Review → Update → Repeat), managing state transitions and ensuring all components interact correctly.
 - **Safety envelope:** boundary checks, rate limits, rollback and shutdown logic.  
 
-### 5.4 What “External” Means in Practice
+### 5.4 What "External" Means in Practice
 
-“External” does not imply a separate organisation. It means:
+"External" does not imply a separate organisation. It means:
 
 - metric definitions are not editable by the system,
 - metric computation occurs in code/config outside system write access,
 - evaluation data is environment-sourced rather than self-reported,
-- invariant changes require explicit external authorisation.#### Invariant Authority in Practice
+- invariant changes require explicit external authorisation.
+
+#### Causal Isolation
+
+The requirement for externality is fundamentally a **causal isolation** property: the optimising system must not be able to influence the evaluation process through any causal path—direct or indirect. This is analogous to non-interference properties in information security.
+
+Concretely, causal isolation requires:
+
+1. **No write access:** The system cannot modify metric definitions, evaluation code, or authority decision logic.
+2. **No input manipulation:** The system cannot selectively present, filter, or frame data to bias authority decisions beyond the structured Challenger output format.
+3. **No channel influence:** The system cannot affect the authority through side channels (e.g., influencing the training data of an LLM authority, modifying the infrastructure on which the authority runs, or controlling the timing of authority invocations to exploit recency bias).
+4. **No identity substitution:** The system cannot impersonate or replace the authority process.
+
+Deployment topology (same machine, same network, separate organisation) is a means of achieving causal isolation, not the definition of it. An LLM authority running on the same server as the optimiser satisfies causal isolation if the optimiser has no write access to the authority's prompts, weights, or execution environment. A human authority in a separate building fails causal isolation if the system controls the information the human sees.#### Invariant Authority in Practice
 
 The **Invariant Authority** role may be fulfilled by:
 
@@ -499,6 +543,24 @@ A valid ratification process includes:
 
 Until step 6 completes, the system continues optimising under the prior invariant set.
 
+#### Authority Quality Requirements
+
+Architectural separation is necessary but insufficient: the framework's value depends on authority quality. Pilot 0 demonstrated this directly—a "balanced" LLM authority accepted 90% of proposals with only 55.6% effectiveness, while a conservative human authority produced incremental improvements with minimal regression (Section 7.1).
+
+An effective authority must satisfy:
+
+1. **Outcome orientation:** Decisions must be grounded in empirical evidence of improvement, not narrative plausibility. A well-argued proposal that lacks statistical support should be rejected.
+
+2. **Appropriate conservatism:** The default position should favour the status quo. The cost of accepting a harmful change (regression plus recovery time) typically exceeds the cost of rejecting a beneficial one (delayed improvement). Authorities should require proposals to clear a meaningful evidence threshold before acceptance.
+
+3. **Domain competence:** The authority must be capable of independently evaluating whether a proposal's claimed evidence supports its conclusions. An authority that cannot distinguish genuine strain signals from statistical noise provides only the appearance of governance (see Section 8.8).
+
+4. **Calibrated acceptance rates:** Acceptance rates should be tracked as a meta-metric. Very high acceptance rates (>80%) suggest insufficient scrutiny. Very low rates (<10%) suggest the authority may be blocking legitimate adaptation. Optimal acceptance rates are domain-dependent but should correlate with proposal effectiveness rates over time.
+
+5. **Replay-based validation:** Where feasible, proposed invariant changes should be validated through historical replay before ratification. This converts the authority's task from judgement under uncertainty to verification of empirical claims.
+
+These requirements apply regardless of whether the authority is human, committee-based, or LLM-based. The form of authority is a deployment decision; the quality requirements are architectural.
+
 ### 5.5 Meta-Invariant: The Protected Separation
 
 The separation between **epistemic capability** and **normative authority** is itself a **meta-invariant**. This meta-invariant comprises:
@@ -509,6 +571,20 @@ The separation between **epistemic capability** and **normative authority** is i
 - the prohibition on evaluating under unratified invariants.
 
 The meta-invariant is not subject to the Invariant Challenge Loop and may not be challenged, revised, or weakened by the system. This architectural constraint is what distinguishes IAI from systems that acquire evaluative sovereignty through recursive self-improvement.
+
+#### Why the Meta-Invariant Is Necessary
+
+The meta-invariant is not merely a design preference. It follows from an epistemic requirement: **a system that controls its own evaluation criteria cannot produce verifiable improvement claims**.
+
+Consider a system that is permitted to redefine what counts as success. If performance degrades under metric A, the system may propose metric B under which its performance appears superior. If it can ratify this change itself, it has not improved—it has relabelled failure as success. The system's improvement claims become unfalsifiable, because any negative result can be dissolved by redefining the evaluation.
+
+This is not a hypothetical concern. It is the structural consequence of combining self-improvement with evaluative sovereignty. The meta-invariant prevents it by ensuring that:
+
+1. **Improvement claims remain falsifiable.** Because the system cannot change evaluation criteria, its performance trajectory can be independently verified, compared to baselines, and audited over time.
+2. **Regression is detectable.** If the system's performance degrades, the degradation appears in the metrics rather than being absorbed by an evaluation change.
+3. **Rollback remains meaningful.** If a strategy change proves harmful, the system can be reverted to a prior state and evaluated under the same criteria, producing a valid comparison.
+
+Without the meta-invariant, none of these properties hold. The meta-invariant is therefore not a restriction on the system's capability—it is a precondition for the system's improvement claims to have empirical content.
 
 Note: The IAI architecture *permits* recursive improvement of the system's own mechanisms (e.g., how the Challenger detects strain or generates proposals), provided the meta-invariant remains protected. This capability—termed **meta-improvement**—is not demonstrated in current pilots, which use fixed Challenger logic. See Section 12 (Future Extensions) for analysis of when meta-improvement would be warranted.
 
@@ -834,6 +910,34 @@ Mitigations:
 - segregate evaluation data collection,
 - random audits of ground truth,
 - independent monitoring.
+
+### 8.8 Authority-System Information Asymmetry
+
+Risk: as the system's domain competence grows, it may understand the domain better than the authority can. The authority is then evaluating proposals it cannot fully comprehend, creating a principal-agent problem. The architectural separation remains formally intact but substantively hollow—the authority cannot meaningfully review what it does not understand.
+
+This risk increases with domain complexity and system capability. In simple domains (e.g., Pilot 0), both system and authority can evaluate proposals directly. In complex domains (e.g., supply chain optimisation, trading), the Challenger may produce proposals grounded in patterns the authority genuinely cannot verify.
+
+Mitigations:
+
+- require Challenger proposals to include **verifiable evidence**, not just arguments—claims must be testable through replay or simulation without requiring the authority to understand the underlying mechanism,
+- mandate **replay-based validation** as a prerequisite for ratification, converting authority review from judgement under uncertainty to verification of empirical results,
+- define **minimum comprehensibility requirements** for proposals: if the authority cannot understand a proposal well enough to specify a rollback condition, the proposal should be rejected,
+- track the **authority comprehension gap** as a meta-metric: if proposals increasingly rely on patterns the authority cannot independently verify, this signals that the authority implementation needs to be upgraded or augmented,
+- consider **hybrid authority** models where automated replay validation is combined with human review of high-level rationale.
+
+### 8.9 Authority Quality Degradation
+
+Risk: authority effectiveness degrades over time without detection. An authority that initially provides rigorous review may drift toward routine approval, particularly under pressure to accelerate adaptation or when proposals consistently appear plausible.
+
+This failure mode is distinct from invariant erosion (Section 8.2): the invariants remain formally external, but the authority's review quality declines, producing the same practical effect as weakened governance.
+
+Mitigations:
+
+- track **acceptance-effectiveness correlation** as a meta-metric: the rate at which accepted proposals lead to measured improvement, tracked over a rolling window,
+- flag authority drift when acceptance rates rise above a domain-specific threshold without corresponding improvement in outcomes,
+- implement **periodic authority calibration**: present the authority with historical proposals of known outcome and verify that its accept/reject decisions correlate with actual effectiveness,
+- for LLM-based authorities, version and audit prompt templates to detect unintended drift in decision criteria,
+- maintain a **minimum rejection rate** as a governance health indicator—an authority that never rejects proposals is not providing meaningful review.
 
 ---
 
